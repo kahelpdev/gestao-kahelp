@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Sprints - Delphi & Automação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; transition: all 0.3s ease; }
+        .tab-active { @apply border-b-2 border-indigo-600 text-indigo-600; }
+        .alert-pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .planning-drop-zone { border: 2px dashed #cbd5e1; min-height: 300px; background: #f8fafc; }
+        .task-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h1 class="text-xl font-bold text-gray-800">SprintControl <span class="text-indigo-600 text-sm font-medium">v3.2</span></h1>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="text-right mr-4">
+                    <p id="activeSprintDisplay" class="text-xs font-bold text-indigo-600 uppercase">Sincronizando...</p>
+                    <p id="currentDateDisplay" class="text-[10px] text-gray-400 font-mono"></p>
+                </div>
+                <button onclick="syncWithFlow()" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-all font-semibold text-sm shadow-md">
+                    <i class="fas fa-sync"></i> Importar do Flow
+                </button>
+            </div>
+        </div>
+        <!-- Navigation Tabs -->
+        <div class="max-w-7xl mx-auto px-4 flex gap-8">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3 px-2 text-sm font-medium tab-active transition-all">Monitor de Execução</button>
+            <button onclick="switchTab('planning')" id="tab-planning" class="py-3 px-2 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-all">Montar Sprint (Planejamento)</button>
+            <button onclick="switchTab('config')" id="tab-config" class="py-3 px-2 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-all">Configurar Calendário</button>
+            <button onclick="switchTab('history')" id="tab-history" class="py-3 px-2 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-all">Histórico</button>
+        </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- SEÇÃO 1: DASHBOARD -->
+        <div id="section-dashboard" class="space-y-8">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Projeto</label>
+                    <select id="dashFilterProject" onchange="renderDashboard()" class="w-full border-gray-200 rounded-xl text-sm p-3 focus:ring-2 focus:ring-indigo-500 border bg-gray-50">
+                        <option value="all">Todos os Projetos</option>
+                        <option value="Delphi 3.0">Delphi 3.0</option>
+                        <option value="Delphi 4.0">Delphi 4.0</option>
+                        <option value="Automação">Automação</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Colaborador</label>
+                    <select id="dashFilterMember" onchange="renderDashboard()" class="w-full border-gray-200 rounded-xl text-sm p-3 focus:ring-2 focus:ring-indigo-500 border bg-gray-50">
+                        <option value="all">Todos os Colaboradores</option>
+                    </select>
+                </div>
+                <button onclick="clearDashFilters()" class="px-6 py-3 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-all">
+                    Limpar Filtros
+                </button>
+            </div>
+            <div id="deviationAlert" class="hidden">
+                <div class="bg-red-600 text-white p-5 rounded-2xl flex items-center justify-between shadow-xl">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-white/20 p-2 rounded-full">
+                            <i class="fas fa-exclamation-triangle text-xl animate-pulse"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-lg">Atenção: Desvio de Foco!</p>
+                            <p class="text-sm opacity-90">Há colaboradores executando tarefas que não foram planejadas para a Sprint atual.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-4">
+                    <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2 px-1">
+                        <i class="fas fa-play-circle text-indigo-500"></i> Execução em Tempo Real
+                    </h2>
+                    <div class="grid grid-cols-1 gap-4" id="plannedTasksContainer"></div>
+                </div>
+                <div class="space-y-4">
+                    <h2 class="text-lg font-bold text-red-600 flex items-center gap-2 px-1">
+                        <i class="fas fa-shield-alt"></i> Alertas de Desvio
+                    </h2>
+                    <div id="unplannedTasksContainer" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+        <!-- SEÇÃO 2: PLANEJAMENTO -->
+        <div id="section-planning" class="hidden space-y-6">
+            <div class="bg-indigo-600 p-6 rounded-2xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-white">
+                    <h2 class="text-xl font-bold">Montar Sprint</h2>
+                    <p class="text-indigo-100 text-sm">Defina quais itens do Flow farão parte do próximo ciclo de entrega.</p>
+                </div>
+                <div class="bg-white/10 p-1 rounded-xl flex items-center gap-3 px-4 py-2 border border-white/20">
+                    <label class="text-white text-xs font-bold uppercase whitespace-nowrap">Destino:</label>
+                    <select id="planningSprintSelect" onchange="renderPlanning()" class="bg-white text-indigo-900 rounded-lg text-sm font-bold p-2 focus:ring-0 outline-none min-w-[180px]">
+                        <!-- Populado via JS -->
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Backlog -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center px-2">
+                        <h3 class="font-bold text-gray-600 uppercase text-xs tracking-wider">Disponível no Flow (Sem Sprint)</h3>
+                        <span id="backlogCount" class="bg-gray-200 text-gray-700 text-[10px] font-bold px-2 py-1 rounded-full">0 itens</span>
+                    </div>
+                    <div id="backlogPlanningContainer" class="planning-drop-zone rounded-2xl p-4 space-y-3 overflow-y-auto max-h-[600px] shadow-inner"></div>
+                </div>
+                <!-- Itens da Sprint -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center px-2">
+                        <h3 class="font-bold text-indigo-600 uppercase text-xs tracking-wider">Itens Planejados na Sprint</h3>
+                        <span id="sprintItemCount" class="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded-full">0 itens</span>
+                    </div>
+                    <div id="sprintPlanningContainer" class="planning-drop-zone rounded-2xl bg-indigo-50 border-indigo-200 p-4 space-y-3 overflow-y-auto max-h-[600px] shadow-inner"></div>
+                </div>
+            </div>
+        </div>
+        <!-- SEÇÃO 3: CONFIGURAÇÃO DE SPRINTS -->
+        <div id="section-config" class="hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div>
+                        <h2 class="font-bold text-gray-800 text-lg">Calendário de Sprints</h2>
+                        <p class="text-xs text-gray-500">Cadastre e gerencie os períodos de entrega do time.</p>
+                    </div>
+                    <button onclick="openSprintModal()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+                        <i class="fas fa-plus mr-2"></i> Nova Sprint
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-[10px] text-gray-400 uppercase tracking-widest">
+                            <tr>
+                                <th class="px-8 py-4">Nome da Sprint</th>
+                                <th class="px-8 py-4">Período</th>
+                                <th class="px-8 py-4">Status</th>
+                                <th class="px-8 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sprintTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- SEÇÃO 4: HISTÓRICO -->
+        <div id="section-history" class="hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-100">
+                    <h2 class="font-bold text-gray-800">Relatório de Alocação</h2>
+                    <p class="text-xs text-gray-500">Histórico detalhado de demandas por colaborador.</p>
+                </div>
+                <div class="p-6" id="historyContainer"></div>
+            </div>
+        </div>
+    </main>
+    <!-- Modal Nova Sprint -->
+    <div id="sprintModal" class="hidden fixed inset-0 bg-gray-900/60 z-[100] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6 text-gray-800">Cadastrar Ciclo</h3>
+            <form id="sprintForm" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Identificação</label>
+                    <input type="text" name="name" required placeholder="Ex: Sprint Março - Semana 1" class="w-full border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 border outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Data Início</label>
+                        <input type="date" name="start" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 border outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Data Fim</label>
+                        <input type="date" name="end" required class="w-full border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 border outline-none">
+                    </div>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeSprintModal()" class="flex-1 text-gray-500 font-bold py-3 rounded-2xl hover:bg-gray-100 transition-colors">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">Salvar Ciclo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Toast de Notificação -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-2xl text-sm font-medium shadow-2xl transition-opacity opacity-0 pointer-events-none z-[200]">
+        Ação realizada com sucesso!
+    </div>
+    <script>
+        // ESTADO GLOBAL
+        let sprints = [
+            { id: 1, name: 'Sprint 22', start: '2023-10-01', end: '2023-10-15', active: false },
+            { id: 2, name: 'Sprint 23', start: '2023-10-16', end: '2023-10-30', active: true }
+        ];
+        let tasks = [
+            { id: 101, title: 'Refatoração Componentes Delphi', project: 'Delphi 3.0', member: 'João Silva', est: '12h', sprintId: 2, status: 'Executando' },
+            { id: 102, title: 'Bug Fix: Cadastro de Cliente', project: 'Delphi 4.0', member: 'Maria Santos', est: '4h', sprintId: 2, status: 'Executando' },
+            { id: 103, title: 'Script Validação NFe', project: 'Automação', member: 'Carlos Lima', est: '8h', sprintId: 1, status: 'Executando' },
+            { id: 104, title: 'Novo Endereçamento PDV', project: 'Delphi 3.0', member: 'João Silva', est: '6h', sprintId: null, status: 'Executando' },
+            { id: 105, title: 'Integração Webhook Flow', project: 'Automação', member: 'Ana Costa', est: '20h', sprintId: null, status: 'Alocado' },
+            { id: 106, title: 'Ajuste Impressão Térmica', project: 'Delphi 4.0', member: 'Maria Santos', est: '5h', sprintId: null, status: 'Alocado' }
+        ];
+        function init() {
+            document.getElementById('currentDateDisplay').innerText = `Hoje: ${new Date().toLocaleDateString('pt-BR')}`;
+            populateMemberFilters();
+            renderAll();
+        }
+        function switchTab(tabId) {
+            ['dashboard', 'config', 'history', 'planning'].forEach(id => {
+                document.getElementById(`section-${id}`).classList.add('hidden');
+                document.getElementById(`tab-${id}`).classList.remove('tab-active');
+            });
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).classList.add('tab-active');
+            renderAll();
+        }
+        function renderPlanning() {
+            const backlogCont = document.getElementById('backlogPlanningContainer');
+            const sprintCont = document.getElementById('sprintPlanningContainer');
+            const select = document.getElementById('planningSprintSelect');
+            const currentVal = select.value;
+            select.innerHTML = '';
+            sprints.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.innerText = s.name + (s.active ? ' (Atual)' : '');
+                select.appendChild(opt);
+            });
+            if (currentVal) {
+                select.value = currentVal;
+            } else {
+                const activeS = sprints.find(s => s.active);
+                if(activeS) select.value = activeS.id;
+            }
+            const selectedSprintId = parseInt(select.value);
+            backlogCont.innerHTML = '';
+            sprintCont.innerHTML = '';
+            const backlogItems = tasks.filter(t => !t.sprintId);
+            const sprintItems = tasks.filter(t => t.sprintId === selectedSprintId);
+            document.getElementById('backlogCount').innerText = `${backlogItems.length} itens`;
+            document.getElementById('sprintItemCount').innerText = `${sprintItems.length} itens`;
+            if(backlogItems.length === 0) {
+                backlogCont.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-20 text-gray-400">
+                        <i class="fas fa-check-double mb-3 text-2xl opacity-20"></i>
+                        <p class="text-xs">Tudo alocado ou sem dados.</p>
+                    </div>`;
+            } else {
+                backlogItems.forEach(t => {
+                    backlogCont.innerHTML += createPlanningCard(t, 'add');
+                });
+            }
+            if(sprintItems.length === 0) {
+                sprintCont.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-20 text-indigo-300">
+                        <i class="fas fa-plus-circle mb-3 text-2xl opacity-30"></i>
+                        <p class="text-xs">Nenhum item planejado para esta sprint.</p>
+                    </div>`;
+            } else {
+                sprintItems.forEach(t => {
+                    sprintCont.innerHTML += createPlanningCard(t, 'remove');
+                });
+            }
+        }
+        function createPlanningCard(task, mode) {
+            const icon = mode === 'add' ? 'fa-plus text-white' : 'fa-times text-white';
+            const btnClass = mode === 'add' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-red-500 hover:bg-red-600';
+            const action = mode === 'add' ? `assignToSprint(${task.id})` : `removeFromSprint(${task.id})`;
+            return `
+                <div class="task-card bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex justify-between items-center group">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 uppercase tracking-tighter">${task.project}</span>
+                            <span class="text-[9px] text-gray-400 font-mono">ID: ${task.id}</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-gray-800 leading-tight">${task.title}</h4>
+                        <p class="text-[11px] text-gray-500 mt-2 flex items-center gap-3">
+                            <span><i class="far fa-user mr-1"></i> ${task.member}</span>
+                            <span class="font-bold text-gray-700">${task.est}</span>
+                        </p>
+                    </div>
+                    <button onclick="${action}" class="w-8 h-8 rounded-xl ${btnClass} flex items-center justify-center transition-all shadow-md">
+                        <i class="fas ${icon}"></i>
+                    </button>
+                </div>
+            `;
+        }
+        function assignToSprint(taskId) {
+            const sprintId = parseInt(document.getElementById('planningSprintSelect').value);
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            if(taskIndex !== -1 && sprintId) {
+                tasks[taskIndex].sprintId = sprintId;
+                showToast(`Demanda #${taskId} movida para a Sprint.`);
+                renderAll();
+            }
+        }
+        function removeFromSprint(taskId) {
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            if(taskIndex !== -1) {
+                tasks[taskIndex].sprintId = null;
+                showToast(`Demanda #${taskId} removida da Sprint.`);
+                renderAll();
+            }
+        }
+        function renderDashboard() {
+            const plannedContainer = document.getElementById('plannedTasksContainer');
+            const unplannedContainer = document.getElementById('unplannedTasksContainer');
+            const activeSprint = sprints.find(s => s.active);
+            const filterProj = document.getElementById('dashFilterProject').value;
+            const filterMem = document.getElementById('dashFilterMember').value;
+            plannedContainer.innerHTML = '';
+            unplannedContainer.innerHTML = '';
+            let hasDeviation = false;
+            const filteredTasks = tasks.filter(task => {
+                const matchProj = filterProj === 'all' || task.project === filterProj;
+                const matchMem = filterMem === 'all' || task.member === filterMem;
+                return matchProj && matchMem;
+            });
+            filteredTasks.forEach(task => {
+                const isWorking = task.status === 'Executando';
+                const isCorrectSprint = activeSprint && task.sprintId === activeSprint.id;
+                if (isWorking) {
+                    if (isCorrectSprint) {
+                        plannedContainer.innerHTML += `
+                            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center border-l-8 border-l-indigo-500 hover:shadow-md transition-shadow">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">${task.project}</span>
+                                        <span class="text-[9px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-bold">PROGRAMADO</span>
+                                    </div>
+                                    <h4 class="font-bold text-gray-800 text-lg">${task.title}</h4>
+                                    <p class="text-xs text-gray-500 mt-2 flex items-center gap-1"><i class="far fa-user"></i> ${task.member}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-2xl font-mono font-black text-gray-800">${task.est}</span>
+                                    <div class="flex items-center gap-1 text-green-500 text-[9px] font-bold mt-2 justify-end">
+                                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> ONLINE
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        hasDeviation = true;
+                        unplannedContainer.innerHTML += `
+                            <div class="bg-white border-2 border-red-100 p-5 rounded-2xl shadow-lg alert-pulse">
+                                <div class="flex justify-between items-start mb-3">
+                                    <span class="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">DESVIO DE FOCO</span>
+                                    <i class="fas fa-ban text-red-600"></i>
+                                </div>
+                                <h4 class="text-sm font-bold text-gray-800">${task.title}</h4>
+                                <div class="mt-4 pt-4 border-t border-red-50 space-y-2">
+                                    <p class="text-xs text-gray-600 flex justify-between"><span>Colaborador:</span> <b>${task.member}</b></p>
+                                    <p class="text-xs text-red-600 flex justify-between"><span>Está em:</span> <b>${getSprintName(task.sprintId)}</b></p>
+                                    <p class="text-[10px] text-gray-400 mt-2 italic">Deveria estar na sprint ativa!</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            });
+            document.getElementById('deviationAlert').classList.toggle('hidden', !hasDeviation);
+            if (plannedContainer.innerHTML === '') {
+                plannedContainer.innerHTML = `<div class="p-20 text-center text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">Sem atividades planejadas no momento.</div>`;
+            }
+        }
+        function populateMemberFilters() {
+            const select = document.getElementById('dashFilterMember');
+            const members = [...new Set(tasks.map(t => t.member))];
+            select.innerHTML = '<option value="all">Todos os Colaboradores</option>';
+            members.sort().forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.innerText = m;
+                select.appendChild(opt);
+            });
+        }
+        function clearDashFilters() {
+            document.getElementById('dashFilterProject').value = 'all';
+            document.getElementById('dashFilterMember').value = 'all';
+            renderDashboard();
+        }
+        function renderSprints() {
+            const body = document.getElementById('sprintTableBody');
+            body.innerHTML = '';
+            sprints.forEach(s => {
+                body.innerHTML += `
+                    <tr class="${s.active ? 'bg-indigo-50/30' : ''}">
+                        <td class="px-8 py-5 font-bold text-gray-800">${s.name}</td>
+                        <td class="px-8 py-5 text-gray-500 font-mono text-xs">${s.start} — ${s.end}</td>
+                        <td class="px-8 py-5">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold ${s.active ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-400'}">
+                                ${s.active ? 'ATIVA' : 'ARQUIVADA'}
+                            </span>
+                        </td>
+                        <td class="px-8 py-5 text-right">
+                            <button onclick="toggleSprint(${s.id})" class="text-indigo-600 hover:text-indigo-800 font-bold text-xs uppercase tracking-widest">
+                                ${s.active ? 'Arquivar' : 'Ativar'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            const active = sprints.find(s => s.active);
+            document.getElementById('activeSprintDisplay').innerText = active ? `Foco: ${active.name}` : "Sem Sprint Ativa";
+        }
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-8">';
+            const members = [...new Set(tasks.map(t => t.member))];
+            members.forEach(m => {
+                const memberTasks = tasks.filter(t => t.member === m);
+                container.innerHTML += `
+                    <div class="border border-gray-100 rounded-3xl p-6 bg-gray-50">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-100">${m.charAt(0)}</div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-lg">${m}</h3>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">${memberTasks.length} Registros</p>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            ${memberTasks.map(t => `
+                                <div class="flex justify-between items-center text-xs p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
+                                    <span class="font-bold text-gray-700 truncate max-w-[140px]">${t.title}</span>
+                                    <span class="text-[9px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">${getSprintName(t.sprintId)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML += '</div>';
+        }
+        function getSprintName(id) {
+            if (!id) return "BACKLOG";
+            const s = sprints.find(x => x.id === id);
+            return s ? s.name : "N/A";
+        }
+        function toggleSprint(id) {
+            sprints.forEach(s => s.active = false);
+            const sprint = sprints.find(s => s.id === id);
+            if (sprint) {
+                sprint.active = true;
+                showToast(`A Sprint ${sprint.name} agora é a Sprint Ativa.`);
+            }
+            renderAll();
+        }
+        function openSprintModal() { document.getElementById('sprintModal').classList.remove('hidden'); }
+        function closeSprintModal() { document.getElementById('sprintModal').classList.add('hidden'); }
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+        function syncWithFlow() {
+            showToast("Importando novas demandas da coluna 'Alocado'...");
+            renderAll();
+        }
+        function renderAll() {
+            renderSprints();
+            renderDashboard();
+            renderPlanning();
+            renderHistory();
+        }
+        document.getElementById('sprintForm').onsubmit = (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newSprint = {
+                id: sprints.length + 1,
+                name: formData.get('name'),
+                start: formData.get('start'),
+                end: formData.get('end'),
+                active: false
+            };
+            sprints.push(newSprint);
+            showToast(`Sprint "${newSprint.name}" criada com sucesso.`);
+            closeSprintModal();
+            renderAll();
+            e.target.reset();
+        };
+        window.onload = init;
+    </script>
+</body>
+</html>
