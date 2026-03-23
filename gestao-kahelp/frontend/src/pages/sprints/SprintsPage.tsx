@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CalendarRange, Plus, Play, Archive, Trash2, X } from 'lucide-react';
 import { sprintsApi, teamsApi } from '../../services/api';
+import { styles } from '../../styles';
 
 export default function SprintsPage() {
   const [sprints, setSprints] = useState<any[]>([]);
@@ -59,17 +60,17 @@ export default function SprintsPage() {
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'bg-primary-500 text-white shadow-lg shadow-primary-500/30';
+      case 'ACTIVE': return 'bg-primary-500 text-white';
       case 'COMPLETED': return 'bg-surface-3 text-gray-400';
-      case 'PLANNING': return 'bg-accent-amber/20 text-accent-amber';
-      case 'CANCELLED': return 'bg-accent-red/20 text-accent-red';
+      case 'PLANNING': return 'bg-accent-amber/15 text-accent-amber';
+      case 'CANCELLED': return 'bg-accent-red/15 text-accent-red';
       default: return 'bg-surface-3 text-gray-400';
     }
   };
 
   const statusLabels: Record<string, string> = {
     ACTIVE: 'Ativa',
-    COMPLETED: 'Concluída',
+    COMPLETED: 'Concluida',
     PLANNING: 'Planejamento',
     CANCELLED: 'Cancelada',
   };
@@ -77,19 +78,19 @@ export default function SprintsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Calendário de Sprints</h1>
-          <p className="text-gray-500 text-sm mt-1">Gerencie os ciclos de entrega do time</p>
+          <h1 className={styles.pageTitle}>Calendario de Sprints</h1>
+          <p className={styles.pageSubtitle}>Gerencie os ciclos de entrega do time</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="bg-primary-600 hover:bg-primary-500 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary-600/25 hover:shadow-primary-500/40 flex items-center gap-2">
+        <button onClick={() => setShowModal(true)} className={`${styles.btnPrimary} flex items-center gap-2`}>
           <Plus className="w-4 h-4" /> Nova Sprint
         </button>
       </div>
@@ -97,10 +98,10 @@ export default function SprintsPage() {
       {/* Sprint Grid */}
       <div className="space-y-3">
         {sprints.length === 0 ? (
-          <div className="bg-surface-card/80 backdrop-blur-xl border border-white/5 rounded-2xl shadow-lg p-16 text-center">
+          <div className={`${styles.glassCard} p-16 text-center`}>
             <CalendarRange className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500">Nenhuma sprint cadastrada</p>
-            <button onClick={() => setShowModal(true)} className="bg-primary-600 hover:bg-primary-500 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary-600/25 hover:shadow-primary-500/40 mt-4 text-sm">
+            <p className="text-gray-500 mb-4">Nenhuma sprint cadastrada</p>
+            <button onClick={() => setShowModal(true)} className={`${styles.btnPrimary} text-sm`}>
               Criar primeira sprint
             </button>
           </div>
@@ -108,12 +109,12 @@ export default function SprintsPage() {
           sprints.map((sprint: any) => (
             <div
               key={sprint.id}
-              className={`bg-surface-card/80 backdrop-blur-xl border border-white/5 rounded-2xl shadow-lg hover:border-primary-500/30 hover:shadow-primary-500/5 transition-all duration-300 p-5 flex items-center justify-between ${sprint.status === 'ACTIVE' ? 'border-l-4 border-l-primary-500' : ''}`}
+              className={`${styles.glassCardHover} p-5 flex items-center justify-between ${sprint.status === 'ACTIVE' ? 'border-l-2 border-l-primary-500' : ''}`}
             >
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
-                  <h3 className="font-bold text-white text-lg">{sprint.name}</h3>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${getStatusStyle(sprint.status)}`}>
+                  <h3 className="font-semibold text-white text-base">{sprint.name}</h3>
+                  <span className={`${styles.statusBadge} ${getStatusStyle(sprint.status)}`}>
                     {statusLabels[sprint.status] || sprint.status}
                   </span>
                 </div>
@@ -127,28 +128,25 @@ export default function SprintsPage() {
                 {sprint.status !== 'ACTIVE' && sprint.status !== 'COMPLETED' && (
                   <button
                     onClick={() => handleActivate(sprint.id)}
-                    className="text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium text-accent-green hover:bg-accent-green/10 flex items-center gap-1"
-                    title="Ativar"
+                    className="text-accent-green hover:bg-accent-green/[0.06] px-3 py-2 rounded-xl transition-all duration-200 text-xs font-medium flex items-center gap-1"
                   >
-                    <Play className="w-4 h-4" /> Ativar
+                    <Play className="w-3.5 h-3.5" /> Ativar
                   </button>
                 )}
                 {sprint.status === 'ACTIVE' && (
                   <button
                     onClick={() => handleArchive(sprint.id)}
-                    className="text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium text-accent-amber hover:bg-accent-amber/10 flex items-center gap-1"
-                    title="Arquivar"
+                    className="text-accent-amber hover:bg-accent-amber/[0.06] px-3 py-2 rounded-xl transition-all duration-200 text-xs font-medium flex items-center gap-1"
                   >
-                    <Archive className="w-4 h-4" /> Arquivar
+                    <Archive className="w-3.5 h-3.5" /> Arquivar
                   </button>
                 )}
                 {sprint.status !== 'ACTIVE' && (
                   <button
                     onClick={() => handleDelete(sprint.id)}
-                    className="text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium text-accent-red hover:bg-accent-red/10"
-                    title="Excluir"
+                    className={`${styles.btnDanger} text-xs`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -160,33 +158,21 @@ export default function SprintsPage() {
       {/* Create Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface-card/80 backdrop-blur-xl border border-white/5 rounded-2xl shadow-lg w-full max-w-md p-6">
+          <div className={`${styles.glassCard} w-full max-w-md p-6`}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-white">Nova Sprint</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white">
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nome</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"
-                  placeholder="Ex: Sprint Março - Semana 1"
-                  required
-                />
+                <label className={styles.label}>Nome</label>
+                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={styles.inputField} placeholder="Ex: Sprint Marco - Semana 1" required />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Time</label>
-                <select
-                  value={form.teamId}
-                  onChange={(e) => setForm({ ...form, teamId: e.target.value })}
-                  className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"
-                  required
-                >
+                <label className={styles.label}>Time</label>
+                <select value={form.teamId} onChange={(e) => setForm({ ...form, teamId: e.target.value })} className={styles.inputField} required>
                   <option value="">Selecione o time</option>
                   {teams.map((t: any) => (
                     <option key={t.id} value={t.id}>{t.name}</option>
@@ -195,43 +181,21 @@ export default function SprintsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Início</label>
-                  <input
-                    type="date"
-                    value={form.startDate}
-                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                    className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"
-                    required
-                  />
+                  <label className={styles.label}>Inicio</label>
+                  <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className={styles.inputField} required />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Fim</label>
-                  <input
-                    type="date"
-                    value={form.endDate}
-                    onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                    className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"
-                    required
-                  />
+                  <label className={styles.label}>Fim</label>
+                  <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className={styles.inputField} required />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Objetivo (opcional)</label>
-                <input
-                  type="text"
-                  value={form.goal}
-                  onChange={(e) => setForm({ ...form, goal: e.target.value })}
-                  className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"
-                  placeholder="Objetivo principal da sprint"
-                />
+                <label className={styles.label}>Objetivo (opcional)</label>
+                <input type="text" value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} className={styles.inputField} placeholder="Objetivo principal da sprint" />
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium flex-1">
-                  Cancelar
-                </button>
-                <button type="submit" className="bg-primary-600 hover:bg-primary-500 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary-600/25 hover:shadow-primary-500/40 flex-1">
-                  Criar Sprint
-                </button>
+                <button type="button" onClick={() => setShowModal(false)} className={`${styles.btnGhost} flex-1`}>Cancelar</button>
+                <button type="submit" className={`${styles.btnPrimary} flex-1`}>Criar Sprint</button>
               </div>
             </form>
           </div>

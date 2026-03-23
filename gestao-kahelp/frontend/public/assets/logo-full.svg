@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="40" viewBox="0 0 220 40" fill="none">
+  <defs>
+    <linearGradient id="logoGradFull" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="boltGradFull" x1="16" y1="6" x2="24" y2="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0e7ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="12" fill="url(#logoGradFull)"/>
+  <path d="M22.5 6L12 22h7l-1.5 12L28 18h-7l1.5-12z" fill="url(#boltGradFull)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" stroke-linejoin="round"/>
+  <text x="52" y="24" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="18" fill="#ffffff" letter-spacing="-0.5">Sprint</text>
+  <text x="117" y="24" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="18" fill="#818cf8" letter-spacing="-0.5">Control</text>
+</svg>

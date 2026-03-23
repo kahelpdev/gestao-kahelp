@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Users, Plus, UserPlus, UserMinus, Trash2, X } from 'lucide-react';
 import { teamsApi, usersApi } from '../../services/api';
+import { styles } from '../../styles';
 
 export default function TeamsPage() {
   const [teams, setTeams] = useState<any[]>([]);
@@ -75,52 +76,52 @@ export default function TeamsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Equipe</h1>
-          <p className="text-gray-500 text-sm mt-1">Gerencie times e membros</p>
+          <h1 className={styles.pageTitle}>Equipe</h1>
+          <p className={styles.pageSubtitle}>Gerencie times e membros</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="bg-primary-600 hover:bg-primary-500 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary-600/25 hover:shadow-primary-500/40 flex items-center gap-2">
+        <button onClick={() => setShowModal(true)} className={`${styles.btnPrimary} flex items-center gap-2`}>
           <Plus className="w-4 h-4" /> Novo Time
         </button>
       </div>
 
       <div className="space-y-3">
         {teams.length === 0 ? (
-          <div className="bg-surface-card/80 backdrop-blur-xl border border-white/5 rounded-2xl shadow-lg p-16 text-center">
-            <Users className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+          <div className={`${styles.glassCard} p-16 text-center`}>
+            <img src="/assets/empty-team.svg" alt="" className="w-32 h-24 mx-auto mb-4 opacity-50" />
             <p className="text-gray-500">Nenhum time cadastrado</p>
           </div>
         ) : (
           teams.map((team: any) => (
-            <div key={team.id} className="bg-surface-card/80 backdrop-blur-xl border border-white/5 rounded-2xl shadow-lg hover:border-primary-500/30 hover:shadow-primary-500/5 transition-all duration-300 overflow-hidden">
+            <div key={team.id} className={`${styles.glassCardHover} overflow-hidden`}>
               <div className="p-5 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(team)}>
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-primary-500/20">
+                  <div className="w-11 h-11 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-primary-600/15">
                     {team.name?.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-bold text-white">{team.name}</h3>
+                    <h3 className="font-semibold text-white">{team.name}</h3>
                     <p className="text-xs text-gray-500">{team._count?.members || 0} membros &middot; {team._count?.sprints || 0} sprints</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowMemberModal(team.id); }}
-                    className="text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium text-xs flex items-center gap-1"
+                    className={`${styles.btnGhost} text-xs flex items-center gap-1`}
                   >
                     <UserPlus className="w-3 h-3" /> Membro
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(team.id); }}
-                    className="text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium text-xs text-accent-red hover:bg-accent-red/10"
+                    className={`${styles.btnDanger} text-xs`}
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -128,24 +129,24 @@ export default function TeamsPage() {
               </div>
 
               {expandedTeam?.id === team.id && (
-                <div className="border-t border-white/5 p-5 bg-surface-3/20">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Membros</h4>
+                <div className="border-t border-white/[0.04] p-5 bg-surface-3/10">
+                  <h4 className={`${styles.label} mb-3`}>Membros</h4>
                   {expandedTeam.members?.length === 0 ? (
                     <p className="text-xs text-gray-500">Nenhum membro adicionado</p>
                   ) : (
                     <div className="space-y-2">
                       {expandedTeam.members?.map((m: any) => (
-                        <div key={m.id} className="flex items-center justify-between bg-surface-3/50 px-4 py-2.5 rounded-lg">
+                        <div key={m.id} className="flex items-center justify-between bg-surface-3/30 px-4 py-2.5 rounded-lg">
                           <div className="flex items-center gap-3">
-                            <div className="w-7 h-7 bg-primary-500/20 rounded-lg flex items-center justify-center text-primary-400 text-xs font-bold">
+                            <div className="w-7 h-7 bg-primary-500/15 rounded-lg flex items-center justify-center text-primary-400 text-xs font-bold">
                               {m.user?.name?.charAt(0)}
                             </div>
                             <span className="text-sm text-white">{m.user?.name}</span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-surface-3 text-gray-400">{m.role}</span>
+                            <span className={`${styles.statusBadge} bg-surface-3 text-gray-400`}>{m.role}</span>
                           </div>
                           <button
                             onClick={() => handleRemoveMember(team.id, m.userId)}
-                            className="text-accent-red hover:text-red-300"
+                            className="text-accent-red/60 hover:text-accent-red transition-colors"
                           >
                             <UserMinus className="w-4 h-4" />
                           </button>
@@ -163,23 +164,23 @@ export default function TeamsPage() {
       {/* Create Team Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface-card/80 backdrop-blur-xl border border-white/5 rounded-2xl shadow-lg w-full max-w-md p-6">
+          <div className={`${styles.glassCard} w-full max-w-md p-6`}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-white">Novo Time</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nome</label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all" required />
+                <label className={styles.label}>Nome</label>
+                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={styles.inputField} required />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Descrição</label>
-                <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all" />
+                <label className={styles.label}>Descricao</label>
+                <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={styles.inputField} />
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium flex-1">Cancelar</button>
-                <button type="submit" className="bg-primary-600 hover:bg-primary-500 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary-600/25 hover:shadow-primary-500/40 flex-1">Criar</button>
+                <button type="button" onClick={() => setShowModal(false)} className={`${styles.btnGhost} flex-1`}>Cancelar</button>
+                <button type="submit" className={`${styles.btnPrimary} flex-1`}>Criar</button>
               </div>
             </form>
           </div>
@@ -189,21 +190,21 @@ export default function TeamsPage() {
       {/* Add Member Modal */}
       {showMemberModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface-card/80 backdrop-blur-xl border border-white/5 rounded-2xl shadow-lg w-full max-w-md p-6">
+          <div className={`${styles.glassCard} w-full max-w-md p-6`}>
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-white">Adicionar Membro</h3>
-              <button onClick={() => setShowMemberModal(null)} className="text-gray-400 hover:text-white"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowMemberModal(null)} className="text-gray-400 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <div className="space-y-4">
-              <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all">
+              <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className={styles.inputField}>
                 <option value="">Selecione um colaborador</option>
                 {users.map((u: any) => (
                   <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
                 ))}
               </select>
               <div className="flex gap-3">
-                <button onClick={() => setShowMemberModal(null)} className="text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium flex-1">Cancelar</button>
-                <button onClick={handleAddMember} disabled={!selectedUserId} className="bg-primary-600 hover:bg-primary-500 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary-600/25 hover:shadow-primary-500/40 flex-1 disabled:opacity-50">Adicionar</button>
+                <button onClick={() => setShowMemberModal(null)} className={`${styles.btnGhost} flex-1`}>Cancelar</button>
+                <button onClick={handleAddMember} disabled={!selectedUserId} className={`${styles.btnPrimary} flex-1 disabled:opacity-50`}>Adicionar</button>
               </div>
             </div>
           </div>

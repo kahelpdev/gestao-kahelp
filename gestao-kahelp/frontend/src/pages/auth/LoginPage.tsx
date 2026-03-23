@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { styles } from '../../styles';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ export default function LoginPage() {
       await login(email, password);
       navigate('/');
     } catch {
-      setError('Email ou senha inválidos');
+      setError('Email ou senha invalidos');
     } finally {
       setLoading(false);
     }
@@ -28,90 +29,112 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-900 via-surface-2 to-surface items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-primary-500 rounded-full blur-[120px]" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-primary-700 rounded-full blur-[150px]" />
-        </div>
+      {/* Left panel - branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-surface-2 items-center justify-center p-16 relative overflow-hidden">
+        {/* Ambient orbs */}
+        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-primary-600 rounded-full blur-[160px] opacity-[0.08]" />
+        <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-primary-400 rounded-full blur-[120px] opacity-[0.06]" />
+
+        {/* Grid pattern */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-40" />
+
         <div className="relative z-10 max-w-md">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/40">
-              <Zap className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-4 mb-10">
+            <img src="/assets/logo.svg" alt="SprintControl" className="w-14 h-14" />
+            <div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">
+                Sprint<span className="text-primary-400">Control</span>
+              </h1>
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-[0.2em] mt-0.5">Gestao Agil</p>
             </div>
-            <h1 className="text-3xl font-bold text-white">SprintControl</h1>
           </div>
-          <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-            Gestão de sprints <span className="text-primary-400">inteligente</span>
+
+          <h2 className="text-4xl font-extrabold text-white leading-[1.1] mb-5 tracking-tight">
+            Gestao de sprints{' '}
+            <span className="text-gradient">inteligente</span>
           </h2>
-          <p className="text-gray-400 text-lg leading-relaxed">
+          <p className="text-gray-400 text-base leading-relaxed">
             Monitore sua equipe em tempo real, detecte desvios de foco e mantenha o controle total sobre suas entregas.
           </p>
+
+          {/* Feature pills */}
+          <div className="flex flex-wrap gap-2 mt-8">
+            {['Monitor em tempo real', 'Alertas de desvio', 'Relatorios'].map((f) => (
+              <span key={f} className="text-xs font-medium text-gray-400 bg-white/[0.04] border border-white/[0.06] px-3 py-1.5 rounded-lg">
+                {f}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-3 mb-10 justify-center">
-            <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-white">SprintControl</h1>
+            <img src="/assets/logo.svg" alt="SprintControl" className="w-10 h-10" />
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Sprint<span className="text-primary-400">Control</span>
+            </h1>
           </div>
 
-          <h3 className="text-2xl font-bold text-white mb-2">Bem-vindo de volta</h3>
-          <p className="text-gray-500 mb-8">Entre com suas credenciais para continuar</p>
+          <h3 className="text-2xl font-bold text-white tracking-tight mb-1">Bem-vindo de volta</h3>
+          <p className="text-gray-500 text-sm mb-8">Entre com suas credenciais para continuar</p>
 
           {error && (
-            <div className="bg-accent-red/10 border border-accent-red/30 text-accent-red px-4 py-3 rounded-xl text-sm mb-6">
+            <div className="bg-accent-red/8 border border-accent-red/20 text-accent-red px-4 py-3 rounded-xl text-sm mb-6 font-medium">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+              <label className={styles.label}>Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all"
+                className={styles.inputField}
                 placeholder="seu@email.com"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Senha</label>
+              <label className={styles.label}>Senha</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-surface-3 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all pr-12"
+                  className={`${styles.inputField} pr-12`}
                   placeholder="Sua senha"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="bg-primary-600 hover:bg-primary-500 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-primary-600/25 hover:shadow-primary-500/40 w-full disabled:opacity-50">
-              {loading ? 'Entrando...' : 'Entrar'}
+            <button type="submit" disabled={loading} className={`${styles.btnPrimary} w-full disabled:opacity-50 disabled:cursor-not-allowed`}>
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Entrando...
+                </span>
+              ) : 'Entrar'}
             </button>
           </form>
 
           <p className="text-center text-gray-500 text-sm mt-8">
-            Ainda não tem conta?{' '}
-            <Link to="/register" className="text-primary-400 hover:text-primary-300 font-semibold">
-              Criar organização
+            Ainda nao tem conta?{' '}
+            <Link to="/register" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
+              Criar organizacao
             </Link>
           </p>
         </div>
